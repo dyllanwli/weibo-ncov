@@ -41,7 +41,7 @@ class Weibo(object):
         self.retweet_video_download = config[
             'retweet_video_download']  # 取值范围为0、1, 0代表不下载转发微博视频,1代表下载
         self.cookie = {'Cookie': config.get('cookie')}  # 微博cookie，可填可不填
-        self.mysql_config = config['mysql_config']  # MySQL数据库连接配置，可以不填
+        self.db_config = config['db_config']  # MySQL数据库连接配置，可以不填
         user_id_list = config['user_id_list']
         if not isinstance(user_id_list, list):
             if not os.path.isabs(user_id_list):
@@ -133,7 +133,7 @@ class Weibo(object):
 
     def user_to_mysql(self):
         """将爬取的用户信息写入MySQL数据库"""
-        mysql_config = {
+        db_config = {
             'host': 'localhost',
             'port': 3306,
             'user': 'root',
@@ -143,7 +143,7 @@ class Weibo(object):
         # 创建'weibo'数据库
         create_database = """CREATE DATABASE IF NOT EXISTS weibo DEFAULT
                          CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci"""
-        self.mysql_create_database(mysql_config, create_database)
+        self.mysql_create_database(db_config, create_database)
         # 创建'user'表
         create_table = """
                 CREATE TABLE IF NOT EXISTS user (
@@ -164,8 +164,8 @@ class Weibo(object):
                 verified_reason varchar(140),
                 PRIMARY KEY (id)
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"""
-        self.mysql_create_table(mysql_config, create_table)
-        self.mysql_insert(mysql_config, 'user', [self.user])
+        self.mysql_create_table(db_config, create_table)
+        self.mysql_insert(db_config, 'user', [self.user])
         print(u'%s信息写入MySQL数据库完毕' % self.user['screen_name'])
 
     def user_to_database(self):
@@ -717,7 +717,7 @@ class Weibo(object):
         print(u'%d条微博写入json文件完毕,保存路径:' % self.got_count)
         print(path)
 
-    def info_to_mongodb(self, collection, info_list):
+    def info_to_mongodb(self, db_config, collection, info_list):
         """将爬取的信息写入MongoDB数据库"""
         try:
             import pymongo
@@ -726,7 +726,10 @@ class Weibo(object):
         try:
             from pymongo import MongoClient
 
-            client = MongoClient()
+            if self.db_config:
+                client = MongoClient(db_config)
+            else:
+                client = MongoClient()
             db = client['weibo']
             collection = db[collection]
             if len(self.write_mode) > 1:
@@ -754,41 +757,41 @@ class Weibo(object):
         finally:
             connection.close()
 
-    def mysql_create_database(self, mysql_config, sql):
+    def mysql_create_database(self, db_config, sql):
         """创建MySQL数据库"""
         try:
             import pymysql
         except ImportError:
             sys.exit(u'系统中可能没有安装pymysql库，请先运行 pip install pymysql ，再运行程序')
         try:
-            if self.mysql_config:
-                mysql_config = self.mysql_config
-            connection = pymysql.connect(**mysql_config)
+            if self.db_config:
+                db_config = self.db_config
+            connection = pymysql.connect(**db_config)
             self.mysql_create(connection, sql)
         except pymysql.OperationalError:
             sys.exit(u'系统中可能没有安装或正确配置MySQL数据库，请先根据系统环境安装或配置MySQL，再运行程序')
 
-    def mysql_create_table(self, mysql_config, sql):
+    def mysql_create_table(self, db_config, sql):
         """创建MySQL表"""
         import pymysql
 
-        if self.mysql_config:
-            mysql_config = self.mysql_config
-        mysql_config['db'] = 'weibo'
-        connection = pymysql.connect(**mysql_config)
+        if self.db_config:
+            db_config = self.db_config
+        db_config['db'] = 'weibo'
+        connection = pymysql.connect(**db_config)
         self.mysql_create(connection, sql)
 
-    def mysql_insert(self, mysql_config, table, data_list):
+    def mysql_insert(self, db_config, table, data_list):
         """向MySQL表插入或更新数据"""
         import pymysql
 
         if len(data_list) > 0:
             keys = ', '.join(data_list[0].keys())
             values = ', '.join(['%s'] * len(data_list[0]))
-            if self.mysql_config:
-                mysql_config = self.mysql_config
-            mysql_config['db'] = 'weibo'
-            connection = pymysql.connect(**mysql_config)
+            if self.db_config:
+                db_config = self.db_config
+            db_config['db'] = 'weibo'
+            connection = pymysql.connect(**db_config)
             cursor = connection.cursor()
             sql = """INSERT INTO {table}({keys}) VALUES ({values}) ON
                      DUPLICATE KEY UPDATE""".format(table=table,
@@ -812,7 +815,7 @@ class Weibo(object):
 
     def weibo_to_mysql(self, wrote_count):
         """将爬取的微博信息写入MySQL数据库"""
-        mysql_config = {
+        db_config = {
             'host': 'localhost',
             'port': 3306,
             'user': 'root',
@@ -840,7 +843,7 @@ class Weibo(object):
                 retweet_id varchar(20),
                 PRIMARY KEY (id)
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"""
-        self.mysql_create_table(mysql_config, create_table)
+        self.mysql_create_table(db_config, create_table)
         weibo_list = []
         retweet_list = []
         if len(self.write_mode) > 1:
@@ -857,8 +860,8 @@ class Weibo(object):
                 w['retweet_id'] = ''
             weibo_list.append(w)
         # 在'weibo'表中插入或更新微博数据
-        self.mysql_insert(mysql_config, 'weibo', retweet_list)
-        self.mysql_insert(mysql_config, 'weibo', weibo_list)
+        self.mysql_insert(db_config, 'weibo', retweet_list)
+        self.mysql_insert(db_config, 'weibo', weibo_list)
         print(u'%d条微博写入MySQL数据库完毕' % self.got_count)
 
     def update_user_config_file(self, user_config_file_path):
