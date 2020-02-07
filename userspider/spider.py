@@ -22,32 +22,32 @@ from tqdm import tqdm
 
 class Weibo(object):
     def __init__(self, config):
-        """Weibo类初始化"""
         self.validate_config(config)
         self.filter = config[
-            'filter']  # 取值范围为0、1,程序默认值为0,代表要爬取用户的全部微博,1代表只爬取用户的原创微博
+            'filter']  
         since_date = str(config['since_date'])
         if since_date.isdigit():
             since_date = str(date.today() - timedelta(int(since_date)))
-        self.since_date = since_date  # 起始时间，即爬取发布日期从该值到现在的微博，形式为yyyy-mm-dd
+        self.since_date = since_date 
         self.write_mode = config[
-            'write_mode']  # 结果信息保存类型，为list形式，可包含csv、mongo和mysql三种类型
+            'write_mode']  
         self.original_pic_download = config[
-            'original_pic_download']  # 取值范围为0、1, 0代表不下载原创微博图片,1代表下载
+            'original_pic_download'] 
         self.retweet_pic_download = config[
-            'retweet_pic_download']  # 取值范围为0、1, 0代表不下载转发微博图片,1代表下载
+            'retweet_pic_download'] 
         self.original_video_download = config[
-            'original_video_download']  # 取值范围为0、1, 0代表不下载原创微博视频,1代表下载
+            'original_video_download'] 
         self.retweet_video_download = config[
-            'retweet_video_download']  # 取值范围为0、1, 0代表不下载转发微博视频,1代表下载
-        self.cookie = {'Cookie': config.get('cookie')}  # 微博cookie，可填可不填
-        self.db_config = config['db_config']  # MySQL数据库连接配置，可以不填
+            'retweet_video_download']  
+        self.cookie = {'Cookie': config.get('cookie')} 
+        self.db_config = config['db_config']  
+        self.print_debug = config['print_debug']
         user_id_list = config['user_id_list']
         if not isinstance(user_id_list, list):
             if not os.path.isabs(user_id_list):
                 user_id_list = os.path.split(
                     os.path.realpath(__file__))[0] + os.sep + user_id_list
-            self.user_config_file_path = user_id_list  # 用户配置文件路径
+            self.user_config_file_path = user_id_list 
             user_config_list = self.get_user_config_list(user_id_list)
         else:
             self.user_config_file_path = ''
@@ -574,7 +574,8 @@ class Weibo(object):
                                 self.weibo.append(wb)
                                 self.weibo_id_list.append(wb['id'])
                                 self.got_count += 1
-                                self.print_weibo(wb)
+                                if self.print_debug == 1:
+                                    self.print_weibo(wb)
             print(u'{} Already got {}({}) the {} pages {}'.format('-' * 30,
                                                  self.user['screen_name'],
                                                  self.user['id'], page,
@@ -906,7 +907,8 @@ class Weibo(object):
         self.get_user_info()
         page_count = self.get_page_count()
         wrote_count = 0
-        self.print_user_info()
+        if self.print_debug == 1:
+            self.print_user_info()
         page1 = 0
         random_pages = random.randint(1, 5)
         self.start_date = datetime.now().strftime('%Y-%m-%d')
