@@ -7,6 +7,7 @@
     "retweet_pic_download": 0,
     "original_video_download": 0,
     "retweet_video_download": 0,
+    "print_debug":0,
     "db_config": "mongodb://admin:password@127.0.0.1",
     "cookie": ""
 }
