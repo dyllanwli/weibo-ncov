@@ -55,13 +55,13 @@ class Weibo(object):
                 'user_id': user_id,
                 'since_date': self.since_date
             } for user_id in user_id_list]
-        self.user_config_list = user_config_list  # 要爬取的微博用户的user_config列表
-        self.user_config = {}  # 用户配置,包含用户id和since_date
-        self.start_date = ''  # 获取用户第一条微博时的日期
-        self.user = {}  # 存储目标微博用户信息
-        self.got_count = 0  # 存储爬取到的微博数
-        self.weibo = []  # 存储爬取到的所有微博信息
-        self.weibo_id_list = []  # 存储爬取到的所有微博id
+        self.user_config_list = user_config_list  
+        self.user_config = {}  
+        self.start_date = '' 
+        self.user = {}  
+        self.got_count = 0  
+        self.weibo = []  
+        self.weibo_id_list = [] 
 
     def validate_config(self, config):
         """验证配置是否正确"""
@@ -201,6 +201,9 @@ class Weibo(object):
             self.user = user
             self.user_to_database()
             return user
+        else:
+            print("User isn't exists >>>>>> PASS ", user_info['id'])
+            return False
 
     def get_long_weibo(self, id):
         """获取长微博"""
@@ -591,7 +594,7 @@ class Weibo(object):
             page_count = int(math.ceil(weibo_count / 10.0))
             return page_count
         except KeyError:
-            sys.exit(u'user non exits')
+            print('user non exits')
 
     def get_write_info(self, wrote_count):
         """获取要写入的微博信息"""
@@ -904,33 +907,33 @@ class Weibo(object):
 
     def get_pages(self):
         """获取全部微博"""
-        self.get_user_info()
-        page_count = self.get_page_count()
-        wrote_count = 0
-        if self.print_debug == 1:
-            self.print_user_info()
-        page1 = 0
-        random_pages = random.randint(1, 5)
-        self.start_date = datetime.now().strftime('%Y-%m-%d')
-        for page in tqdm(range(1, page_count + 1), desc='Progress'):
-            is_end = self.get_one_page(page)
-            if is_end:
-                break
+        if self.get_user_info():
+            page_count = self.get_page_count()
+            wrote_count = 0
+            if self.print_debug == 1:
+                self.print_user_info()
+            page1 = 0
+            random_pages = random.randint(1, 5)
+            self.start_date = datetime.now().strftime('%Y-%m-%d')
+            for page in tqdm(range(1, page_count + 1), desc='Progress'):
+                is_end = self.get_one_page(page)
+                if is_end:
+                    break
 
-            if page % 20 == 0:  # 每爬20页写入一次文件
-                self.write_data(wrote_count)
-                wrote_count = self.got_count
+                if page % 20 == 0: 
+                    self.write_data(wrote_count)
+                    wrote_count = self.got_count
 
-            # 通过加入随机等待避免被限制。爬虫速度过快容易被系统限制(一段时间后限
-            # 制会自动解除)，加入随机等待模拟人的操作，可降低被系统限制的风险。默
-            # 认是每爬取1到5页随机等待6到10秒，如果仍然被限，可适当增加sleep时间
-            if (page - page1) % random_pages == 0 and page < page_count:
-                sleep(random.randint(6, 10))
-                page1 = page
-                random_pages = random.randint(1, 5)
+                # 通过加入随机等待避免被限制。爬虫速度过快容易被系统限制(一段时间后限
+                # 制会自动解除)，加入随机等待模拟人的操作，可降低被系统限制的风险。
+                if (page - page1) % random_pages == 0 and page < page_count:
+                    sleep(random.randint(10, 14))
+                    page1 = page
+                    random_pages = random.randint(1, 5)
 
-        self.write_data(wrote_count)  # 将剩余不足20页的微博写入文件
-        print(u'Spider Done，get total %d weibo content' % self.got_count)
+            self.write_data(wrote_count)  
+            print(u'Spider Done，get total %d weibo content' % self.got_count)
+        return False
 
     def get_user_config_list(self, file_path):
         """获取文件中的微博id信息"""
@@ -945,8 +948,11 @@ class Weibo(object):
                     user_config['user_id'] = info[0]
                     if len(info) > 2 and self.is_date(info[2]):
                         user_config['since_date'] = info[2]
+                        # add pass tag to skip the finished content
+                        user_config['ifPass'] = True
                     else:
                         user_config['since_date'] = self.since_date
+                        user_config['ifPass'] = False
                     user_config_list.append(user_config)
         return user_config_list
 
@@ -962,12 +968,17 @@ class Weibo(object):
         """运行爬虫"""
         try:
             for user_config in self.user_config_list:
+                if user_config['ifPass']:
+                    # This will skip the user scripted before
+                    continue
                 self.initialize_info(user_config)
-                self.get_pages()
-                print(u'Finished this task')
-                print('*' * 100)
-                if self.user_config_file_path:
-                    self.update_user_config_file(self.user_config_file_path)
+                if self.get_pages():
+                    print(u'Finished this task')
+                    print('*' * 100)
+                    if self.user_config_file_path:
+                        self.update_user_config_file(self.user_config_file_path)
+                else:
+                    print(u'Continue next id')
         except Exception as e:
             print('Error: ', e)
             traceback.print_exc()
@@ -986,7 +997,8 @@ def main():
             except ValueError:
                 sys.exit(u'config.json')
         wb = Weibo(config)
-        wb.start()  # 爬取微博信息
+
+        wb.start() # start
     except Exception as e:
         print('Error: ', e)
         traceback.print_exc()
