@@ -55,7 +55,8 @@ class Weibo(object):
                 'user_id': user_id,
                 'since_date': self.since_date
             } for user_id in user_id_list]
-        self.user_config_list = user_config_list  
+        self.user_config_list = user_config_list
+        self.user_exists = True  
         self.user_config = {}  
         self.start_date = '' 
         self.user = {}  
@@ -203,6 +204,7 @@ class Weibo(object):
             return user
         else:
             print("User isn't exists >>>>>> PASS ", self.user_config['user_id'])
+            self.user_exists = False
             return False
 
     def get_long_weibo(self, id):
@@ -501,7 +503,6 @@ class Weibo(object):
         print('-' * 120)
 
     def get_one_weibo(self, info):
-        """获取一条微博的全部信息"""
         try:
             weibo_info = info['mblog']
             weibo_id = weibo_info['id']
@@ -540,7 +541,6 @@ class Weibo(object):
             traceback.print_exc()
 
     def is_pinned_weibo(self, info):
-        """判断微博是否为置顶微博"""
         weibo_info = info['mblog']
         title = weibo_info.get('title')
         if title and title.get('text') == u'置顶':
@@ -549,7 +549,6 @@ class Weibo(object):
             return False
 
     def get_one_page(self, page):
-        """获取一页的全部微博"""
         try:
             js = self.get_weibo_json(page)
             if js['ok']:
@@ -588,7 +587,6 @@ class Weibo(object):
             traceback.print_exc()
 
     def get_page_count(self):
-        """获取微博页数"""
         try:
             weibo_count = self.user['statuses_count']
             page_count = int(math.ceil(weibo_count / 10.0))
@@ -597,7 +595,6 @@ class Weibo(object):
             print('user non exits')
 
     def get_write_info(self, wrote_count):
-        """获取要写入的微博信息"""
         write_info = []
         for w in self.weibo[wrote_count:]:
             wb = OrderedDict()
@@ -619,7 +616,6 @@ class Weibo(object):
         return write_info
 
     def get_filepath(self, type):
-        """获取结果文件路径"""
         try:
             file_dir = os.path.split(
                 os.path.realpath(__file__)
@@ -638,7 +634,6 @@ class Weibo(object):
             traceback.print_exc()
 
     def get_result_headers(self):
-        """获取要写入结果文件的表头"""
         result_headers = [
             'id', 'bid', 'Content', 'Imageurl', 'Videourl', 'Location', 'Date', 'From', 'Likes',
             'Comments', 'Retweet', 'Topics', '@user'
@@ -650,7 +645,6 @@ class Weibo(object):
         return result_headers
 
     def write_csv(self, wrote_count):
-        """将爬到的信息写入csv文件"""
         write_info = self.get_write_info(wrote_count)
         result_headers = self.get_result_headers()
         result_data = [w.values() for w in write_info]
@@ -674,7 +668,6 @@ class Weibo(object):
         print(self.get_filepath('csv'))
 
     def update_json_data(self, data, weibo_info):
-        """更新要写入json结果文件中的数据，已经存在于json中的信息更新为最新值，不存在的信息添加到data中"""
         data['user'] = self.user
         if data.get('weibo'):
             is_new = 1  # 待写入微博是否全部为新微博，即待写入微博与json中的数据不重复
@@ -699,7 +692,6 @@ class Weibo(object):
         return data
 
     def write_json(self, wrote_count):
-        """将爬到的信息写入json文件"""
         data = {}
         path = self.get_filepath('json')
         if os.path.isfile(path):
@@ -713,7 +705,6 @@ class Weibo(object):
         print(path)
 
     def info_to_mongodb(self,collection, info_list):
-        """将爬取的信息写入MongoDB数据库"""
         try:
             import pymongo
         except ImportError:
@@ -740,12 +731,10 @@ class Weibo(object):
             sys.exit(u'MONGODB REQUIRED')
 
     def weibo_to_mongodb(self, wrote_count):
-        """将爬取的微博信息写入MongoDB数据库"""
         self.info_to_mongodb('weibo', self.weibo[wrote_count:])
         print(u'%d content inserted into mongodb' % self.got_count)
 
     def mysql_create(self, connection, sql):
-        """创建MySQL数据库或表"""
         try:
             with connection.cursor() as cursor:
                 cursor.execute(sql)
@@ -753,7 +742,6 @@ class Weibo(object):
             connection.close()
 
     def mysql_create_database(self, db_config, sql):
-        """创建MySQL数据库"""
         try:
             import pymysql
         except ImportError:
@@ -767,7 +755,6 @@ class Weibo(object):
             sys.exit(u'MYSQL DATABASE REQUIRED')
 
     def mysql_create_table(self, db_config, sql):
-        """创建MySQL表"""
         import pymysql
 
         if self.db_config:
@@ -777,7 +764,6 @@ class Weibo(object):
         self.mysql_create(connection, sql)
 
     def mysql_insert(self, db_config, table, data_list):
-        """向MySQL表插入或更新数据"""
         import pymysql
 
         if len(data_list) > 0:
@@ -809,7 +795,6 @@ class Weibo(object):
                 connection.close()
 
     def weibo_to_mysql(self, wrote_count):
-        """将爬取的微博信息写入MySQL数据库"""
         db_config = {
             'host': 'localhost',
             'port': 3306,
@@ -872,15 +857,26 @@ class Weibo(object):
                 info = line.split(' ')
                 if len(info) > 0 and info[0].isdigit():
                     if self.user_config['user_id'] == info[0]:
-                        if len(info) == 1:
-                            info.append(self.user['screen_name'])
-                            info.append(self.start_date)
-                        if len(info) == 2:
-                            info.append(self.start_date)
-                        if len(info) > 2:
-                            info[2] = self.start_date
-                        lines[i] = ' '.join(info)
-                        break
+                        if self.user_exists:
+                            # if user exists and user_id is verified
+                            # update the line of user id
+                            if len(info) == 1:
+                                if self.user['screen_name']: 
+                                    info.append(self.user['screen_name'])
+                                else:
+                                    info.append("non_screen_name")
+                                info.append(self.start_date)
+                            if len(info) == 2:
+                                info.append(self.start_date)
+                            if len(info) > 2:
+                                info[2] = self.start_date
+                            lines[i] = ' '.join(info)
+                            break
+                        else:
+                            # if user is not exists or user_id is not verified
+                            # remove the line of user_id
+                            lines = lines[:i] + lines[i+1:]
+                            break
         with codecs.open(user_config_file_path, 'w', encoding='utf-8') as f:
             f.write('\n'.join(lines))
 
