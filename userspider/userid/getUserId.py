@@ -61,7 +61,7 @@ class Weibo(object):
     def check_user(self):
         # print("Load user_list", self.true_user)
         randList = list(self.load_np("../input/test.npy"))
-        start_index = 0
+        start_index = 72
         try:
             with open("user_list.txt", 'r') as file:
                 start_line = file.readlines()[-1]
@@ -72,21 +72,24 @@ class Weibo(object):
         # print("Test Exists User", self.get_user_info("1669879400"))
         print(len(randList))
         index = start_index
+        randList = randList[:-start_index]
         while index < lenRandList:
             index += 1
             user_id = randList.pop()
+            print("checking", user_id)
             # print(index, user_id)
             if index%30 == 0:
                 time.sleep(6)
             try:
                 if self.get_user_info(user_id):
-                    print(user_id)
+                    print("The", user_id, "is exists")
                     with open("user_list.txt", 'a') as file:
                         new = "{} {}\n".format(index, user_id)
                         file.write(new)
                     # np.save("/kaggle/working/user_list.npy", randList)
 
             except Exception as e:
+                print('Error: ', e)
                 index -= 1
                 continue
 

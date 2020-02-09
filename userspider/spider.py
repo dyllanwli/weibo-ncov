@@ -860,7 +860,7 @@ class Weibo(object):
         print(u'%d content inserted into mysql' % self.got_count)
 
     def update_user_config_file(self, user_config_file_path):
-        """更新用户配置文件"""
+        print("Updating user config file")
         with open(user_config_file_path, 'rb') as f:
             try:
                 lines = f.read().splitlines()
@@ -968,6 +968,7 @@ class Weibo(object):
         """运行爬虫"""
         try:
             for user_config in self.user_config_list:
+                print("spidering user", user_config['user_id'])
                 if user_config['ifPass']:
                     # This will skip the user scripted before
                     continue
@@ -975,8 +976,8 @@ class Weibo(object):
                 if self.get_pages():
                     print(u'Finished this task')
                     print('*' * 100)
-                    if self.user_config_file_path:
-                        self.update_user_config_file(self.user_config_file_path)
+                if self.user_config_file_path:
+                    self.update_user_config_file(self.user_config_file_path)
                 else:
                     print(u'Continue next id')
         except Exception as e:
