@@ -568,9 +568,7 @@ class Weibo(object):
                                 if self.is_pinned_weibo(w):
                                     continue
                                 else:
-                                    print(u'{} Already got {}({}) the {} pages {}'.format(
-                                        '-' * 30, self.user['screen_name'],
-                                        self.user['id'], page, '-' * 30))
+                                    print(u'Already got {}({}) the {} pages'.format(self.user['screen_name'],self.user['id'], page))
                                     return True
                             if (not self.filter) or (
                                     'retweet' not in wb.keys()):
@@ -579,10 +577,7 @@ class Weibo(object):
                                 self.got_count += 1
                                 if self.print_debug == 1:
                                     self.print_weibo(wb)
-            print(u'{} Already got {}({}) the {} pages {}'.format('-' * 30,
-                                                 self.user['screen_name'],
-                                                 self.user['id'], page,
-                                                 '-' * 30))
+            print(u'Already got {}({}) the {} pages'.format(self.user['screen_name'],self.user['id'], page))
         except Exception as e:
             print("Error: ", e)
             traceback.print_exc()
