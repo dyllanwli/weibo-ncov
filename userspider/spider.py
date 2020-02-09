@@ -202,7 +202,7 @@ class Weibo(object):
             self.user_to_database()
             return user
         else:
-            print("User isn't exists >>>>>> PASS ", user_info['id'])
+            print("User isn't exists >>>>>> PASS ", self.user_config['id'])
             return False
 
     def get_long_weibo(self, id):
