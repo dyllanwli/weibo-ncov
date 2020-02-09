@@ -36,13 +36,13 @@ class Weibo(object):
         js = self.get_json(params)
         if js['ok']:
             return True
-            # info = js['data']['userInfo']
-            # statuses_count = info.get('statuses_count', 0)
-            # page_count = int(math.ceil(statuses_count / 10.0))
-            # if page_count > 1:
-            #     return True
-            # else:
-            #     return False
+            info = js['data']['userInfo']
+            statuses_count = info.get('statuses_count', 0)
+            page_count = int(math.ceil(statuses_count / 10.0))
+            if page_count > 1:
+                return True
+            else:
+                return False
     
     def write_to_txt(self, filename):
         with open(filename, 'w') as f:
@@ -61,7 +61,7 @@ class Weibo(object):
     def check_user(self):
         # print("Load user_list", self.true_user)
         randList = list(self.load_np("../input/test.npy"))
-        start_index = 72
+        start_index = 7930
         try:
             with open("user_list.txt", 'r') as file:
                 start_line = file.readlines()[-1]
