@@ -967,11 +967,14 @@ class Weibo(object):
     def start(self):
         """运行爬虫"""
         try:
-            for user_config in self.user_config_list:
-                print("spidering user", user_config['user_id'])
+            for index, user_config in enumerate(self.user_config_list):
                 if user_config['ifPass']:
                     # This will skip the user scripted before
                     continue
+                if index%10 == 0:
+                    print("pasue for ip checking")
+                    sleep(random.randint(6, 10))
+                print("spidering user", user_config['user_id'])
                 self.initialize_info(user_config)
                 if self.get_pages():
                     print(u'Finished this task')
