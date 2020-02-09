@@ -10,4 +10,5 @@ with open("user_list.txt", "r") as file:
 
 
 with open("user_list_warppered.txt", "w") as file:
+    id = list(set(id))
     file.writelines(id)
