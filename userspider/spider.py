@@ -201,6 +201,7 @@ class Weibo(object):
             user = self.standardize_info(user_info)
             self.user = user
             self.user_to_database()
+            self.user_exists = True
             return user
         else:
             print("User isn't exists >>>>>> PASS ", self.user_config['user_id'])
