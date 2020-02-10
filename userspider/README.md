@@ -21,6 +21,6 @@ This file is a discription for configuration.
 ## References
 
 1. https://patents.google.com/patent/CN102708176B/zh
-2. https://github.com/dataabc/weibo-crawler
+2. https://github.com/dataabc/weiboSpider
 3. https://github.com/SpiderClub/weibospider
 4. https://open.weibo.com/wiki/API%E6%96%87%E6%A1%A3/en
