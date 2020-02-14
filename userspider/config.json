@@ -1,7 +1,7 @@
 {
     "user_id_list": "./userid/user_id_list.txt",
     "filter": 0,
-    "since_date": 40,
+    "since_date": "2020-01-01",
     "write_mode": ["mongo"],
     "original_pic_download": 0,
     "retweet_pic_download": 0,
