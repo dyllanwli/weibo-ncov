@@ -1,5 +1,5 @@
 {
-    "user_id_list": "./user_data/all_id_exclude_done_2.txt",
+    "user_id_list": "./user_data/all_id_exclude_done_0.txt",
     "filter": 0,
     "since_date": "2020-01-01",
     "write_mode": ["mongo"],
